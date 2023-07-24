@@ -131,6 +131,8 @@ typedef struct {
     int r_out;
     int v_in;
     int v_out;
+    int vc_in;
+    int vc_out;
     int imm;
 } decoded_t;
 

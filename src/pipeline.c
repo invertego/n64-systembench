@@ -62,6 +62,10 @@ static void stage_if(pipeline_t* p) {
                 pdebugf("if su dep %x %x\n", d_prev.v_out, d.v_in);
                 break;
             }
+            if (d_prev.vc_out & (d.vc_in | d.vc_out)) {
+                pdebugf("if su dep c %x %x\n", d_prev.vc_out, d.vc_in);
+                break;
+            }
             issue_su = true;
             //debugf("su %03lX %08lX\n", p->if_in.pc, inst);
             p->rd_in.su.inst = inst;
@@ -71,6 +75,10 @@ static void stage_if(pipeline_t* p) {
             if (issue_vu) break;
             if (d_prev.v_out & (d.v_in | d.v_out)) {
                 pdebugf("if vu dep %x %x\n", d_prev.v_out, d.v_in);
+                break;
+            }
+            if (d_prev.vc_out & (d.vc_in | d.vc_out)) {
+                pdebugf("if vu dep c %x %x\n", d_prev.vc_out, d.vc_in);
                 break;
             }
             #if 0

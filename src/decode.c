@@ -143,13 +143,15 @@ void decode_instr(decoded_t* d_out, uint32_t op) {
     #define IMMi16 (int16_t)(op)
     #define IMMu16 (uint16_t)(op)
     #define IMMu26 (op & 0x03ffffff)
-    #define VMASK(n) (1 << n)
-    #define VBLOCK(n) (0xFF << (n & ~7))
+    #define VMASK(n) (1 << (n))
+    #define VBLOCK(n) (0xFF << ((n) & ~7))
     decoded_t d;
 
     memset(&d, 0xff, sizeof(d));
     d.v_in = 0;
     d.v_out = 0;
+    d.vc_in = 0;
+    d.vc_out = 0;
 
     switch (op >> 26) {
     case 0x00: // SPECIAL
@@ -221,20 +223,20 @@ void decode_instr(decoded_t* d_out, uint32_t op) {
             case 0x0d: d.opc = I_VMADM; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x0e: d.opc = I_VMADN; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x0f: d.opc = I_VMADH; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x10: d.opc = I_VADD; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x11: d.opc = I_VSUB; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x13: d.opc = I_VABS; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x14: d.opc = I_VADDC; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x15: d.opc = I_VSUBC; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
+            case 0x10: d.opc = I_VADD; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0); break;
+            case 0x11: d.opc = I_VSUB; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0); break;
+            case 0x13: d.opc = I_VABS; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0); break;
+            case 0x14: d.opc = I_VADDC; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0); break;
+            case 0x15: d.opc = I_VSUBC; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0); break;
             case 0x1d: d.opc = I_VSAR; d.v_out = VMASK(VDn); break;
-            case 0x20: d.opc = I_VLT; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x21: d.opc = I_VEQ; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x22: d.opc = I_VNE; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x23: d.opc = I_VGE; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x24: d.opc = I_VCL; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x25: d.opc = I_VCH; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x26: d.opc = I_VCR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x27: d.opc = I_VMRG; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
+            case 0x20: d.opc = I_VLT; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1); break;
+            case 0x21: d.opc = I_VEQ; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1); break;
+            case 0x22: d.opc = I_VNE; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1); break;
+            case 0x23: d.opc = I_VGE; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1); break;
+            case 0x24: d.opc = I_VCL; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1) | VMASK(2); break;
+            case 0x25: d.opc = I_VCH; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1) | VMASK(2); break;
+            case 0x26: d.opc = I_VCR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1) | VMASK(2); break;
+            case 0x27: d.opc = I_VMRG; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); d.vc_in = d.vc_out = VMASK(0) | VMASK(1); break;
             case 0x28: d.opc = I_VAND; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x29: d.opc = I_VNAND; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x2a: d.opc = I_VOR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
@@ -256,9 +258,9 @@ void decode_instr(decoded_t* d_out, uint32_t op) {
             #define E (int)((op >> 7) & 15)
             switch((op >> 21) & 0x1f) {
             case 0x00: d.opc = I_MFC2; d.r_out = RTn; d.v_in = VMASK(VSn); break;
-            case 0x02: d.opc = I_CFC2; d.r_out = RTn; /*RDn TODO*/; break;
+            case 0x02: d.opc = I_CFC2; d.r_out = RTn; d.vc_in = VMASK(RDn & 3); break;
             case 0x04: d.opc = I_MTC2; d.r_in = RTn; d.v_out = VMASK(VSn); break;
-            case 0x06: d.opc = I_CTC2; d.r_in = RTn; /*RDn TODO*/; break;
+            case 0x06: d.opc = I_CTC2; d.r_in = RTn; d.vc_out = VMASK(RDn & 3); break;
             }
             #undef E
         } break;

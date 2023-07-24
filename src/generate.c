@@ -265,9 +265,6 @@ uint32_t generate_code(void* code, int inst_count, int* cycle_estimate, int flag
         bool delay_out = delay;
         uint32_t* next_ptr = generate_instr(code_start, code_ptr, &delay_out, next_flags);
         decode_instr(&d_curr, next_ptr[-1]);
-        // vector control register dependencies not yet tracked
-        if (IS_VU(d_prev.opc) && (d_curr.opc == I_CTC2 || d_curr.opc == I_CFC2)) goto retry;
-        if (IS_VU(d_curr.opc) && (d_prev.opc == I_CTC2)) goto retry;
         // avoid weird dual issue restrictions with DE operand VU instructions
         if (!IS_VU(d_prev.opc) && d_prev.v_out && (d_curr.opc >= I_VRCP && d_curr.opc <= I_VNOP)) goto retry;
         code_ptr = next_ptr;
