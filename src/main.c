@@ -3,6 +3,8 @@
 #include <libdragon.h>
 #include "../libdragon/include/regsinternal.h"
 
+#include "generate.h"
+
 typedef uint64_t xcycle_t;
 
 #define RCP_FREQUENCY            62500000              // N64 & iQue
@@ -107,11 +109,14 @@ static volatile void *PIF_RAM = (void *)0x1fc007c0;
 
 __attribute__((noinline))
 xcycle_t timeit_average(xcycle_t *samples, int n) {
+    assert(n > 2); // need at least 3 samples
     int min=0,max=0;
     for (int i=1;i<n;i++) {
         if (samples[i] < samples[min]) min=i;
         if (samples[i] > samples[max]) max=i;
     }
+    if (min == max) 
+        return samples[0];
     xcycle_t total = 0;
     for (int i=0;i<n;i++)
         if (i != min && i != max)
@@ -496,26 +501,25 @@ xcycle_t bench_joybus_access(benchmark_t *b) {
 
 /**************************************************************************************/
 
-void bench_rsp(void)
-{
-    volatile uint32_t t1;
-    volatile bool finish = false;
-    void sp_done(void) {
-        t1 = TICKS_READ();
-        finish = true;
-    }
+xcycle_t bench_rsp_mfc0_loop(benchmark_t *b) {
+    return TIMEIT_MULTI(5, ({ rsp_load(&rsp_bench); }), ({ rsp_run(); }));
+}
 
-    register_SP_handler(sp_done);
-    rsp_load(&rsp_bench);
+uint64_t code_buffer[4096 / 8];
 
-    enable_interrupts();
-    uint32_t t0 = TICKS_READ();
-    rsp_run_async();
-    while (!finish) {}
+bool bench_rsp_pipeline(int inst_count, int iter) {
+    int cycle_estimate = 0;
+    uint32_t code_size = generate_code(code_buffer, inst_count, &cycle_estimate, GEN_SU | GEN_VU);
+    data_cache_hit_writeback_invalidate(code_buffer, code_size);
 
-    disable_interrupts();
-    unregister_SP_handler(sp_done);
-    debugf("RSP loop:    %7ld cycles\n", TICKS_DISTANCE(t0, t1));
+    rsp_load_code(code_buffer, code_size, 0);
+    rsp_run();
+
+    int32_t cycle_measure = TICKS_DISTANCE(SP_DMEM[0], SP_DMEM[1]);
+    cycle_measure -= 6; // remove 5 nops + mfc0
+    debugf("RSP: %ld / %d cycles measured / estimated (iteration %d)\n", cycle_measure, cycle_estimate, iter);
+
+    return cycle_measure == cycle_estimate;
 }
 
 const char *cycletype_name(cycletype_t ct) {
@@ -554,6 +558,7 @@ void format_speed(char *buf, int nbytes, xcycle_t time) {
 int main(void)
 {
     benchmark_t benchs[] = {
+#if 0
         { bench_ram_cached_r8,  "RDRAM C8R",     1,   UNIT_BYTES, CYCLE_CPU,  XCYCLE_FROM_CPU(3) },
         { bench_ram_cached_r16, "RDRAM C16R",    2,   UNIT_BYTES, CYCLE_CPU,  XCYCLE_FROM_CPU(3) },
         { bench_ram_cached_r32, "RDRAM C32R",    4,   UNIT_BYTES, CYCLE_CPU,  XCYCLE_FROM_CPU(3) },
@@ -596,6 +601,9 @@ int main(void)
         { bench_joybus_3j,      "JOY: 3J",       64,   UNIT_BYTES, CYCLE_RCP,  XCYCLE_FROM_RCP(77924) },
         { bench_joybus_4j,      "JOY: 4J",       64,   UNIT_BYTES, CYCLE_RCP,  XCYCLE_FROM_RCP(97890) },
         { bench_joybus_access,  "JOY: Accessory",64,   UNIT_BYTES, CYCLE_RCP,  XCYCLE_FROM_RCP(36834) },
+#endif
+
+        { bench_rsp_mfc0_loop, "RSP MFC0 Loop",   1,   UNIT_BYTES, CYCLE_RCP,  XCYCLE_FROM_RCP(7 * 0x200000) },
     };
 
     rsp_init();
@@ -607,6 +615,14 @@ int main(void)
     // now. We could add some asserts to make sure that all peripherals are idle at this point.
     disable_interrupts();
     VI_regs->control = 0;
+
+#if 1
+    int iter = 0;
+    for (iter = 0; iter < 10000; iter++) {
+        if (!bench_rsp_pipeline(10, iter)) break;
+    }
+    debugf("Ran for %d iterations\n", iter);
+#endif
 
     int passed_0p  = 0;
     int passed_5p  = 0;

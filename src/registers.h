@@ -1,0 +1,54 @@
+#pragma once
+
+#define reg_invalid -1
+#define reg_zero 0
+#define reg_at 1
+#define reg_v0 2
+#define reg_v1 3
+#define reg_a0 4
+#define reg_a1 5
+#define reg_a2 6
+#define reg_a3 7
+#define reg_t0 8
+#define reg_t1 9
+#define reg_t2 10
+#define reg_t3 11
+#define reg_t4 12
+#define reg_t5 13
+#define reg_t6 14
+#define reg_t7 15
+#define reg_s0 16
+#define reg_s1 17
+#define reg_s2 18
+#define reg_s3 19
+#define reg_s4 20
+#define reg_s5 21
+#define reg_s6 22
+#define reg_s7 23
+#define reg_t8 24
+#define reg_t9 25
+#define reg_k0 26
+#define reg_k1 27
+#define reg_gp 28
+#define reg_sp 29
+#define reg_fp 30
+#define reg_ra 31
+
+#define COP0_DMA_SPADDR         0
+#define COP0_DMA_RAMADDR        1
+#define COP0_DMA_READ           2
+#define COP0_DMA_WRITE          3
+#define COP0_SP_STATUS          4
+#define COP0_DMA_FULL           5
+#define COP0_DMA_BUSY           6
+#define COP0_SEMAPHORE          7
+#define COP0_DP_START           8
+#define COP0_DP_END             9
+#define COP0_DP_CURRENT         10
+#define COP0_DP_STATUS          11
+#define COP0_DP_CLOCK           12
+#define COP0_DP_BUSY            13
+#define COP0_DP_PIPE_BUSY       14
+#define COP0_DP_TMEM_BUSY       15
+
+#define DP_WSTATUS_RESET_CLOCK_COUNTER  (1<<9)
