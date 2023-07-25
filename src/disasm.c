@@ -104,7 +104,7 @@ void disasm_instr(char* buf, uint32_t pc, uint32_t op) {
             case 0x08: sprintf(buf, "VMACF %s, %s, %s[%d]", VD, VS, VT, E); break;
             case 0x09: sprintf(buf, "VMACU %s, %s, %s[%d]", VD, VS, VT, E); break;
             case 0x0a: sprintf(buf, "VRNDN %s, %s, %s[%d]", VD, VS, VT, E); break;
-            case 0x0b: sprintf(buf, "VMACQ %s", VD); break;
+            case 0x0b: sprintf(buf, "VMACQ %s, %s, %s[%d]", VD, VS, VT, E); break;
             case 0x0c: sprintf(buf, "VMADL %s, %s, %s[%d]", VD, VS, VT, E); break;
             case 0x0d: sprintf(buf, "VMADM %s, %s, %s[%d]", VD, VS, VT, E); break;
             case 0x0e: sprintf(buf, "VMADN %s, %s, %s[%d]", VD, VS, VT, E); break;
@@ -136,7 +136,7 @@ void disasm_instr(char* buf, uint32_t pc, uint32_t op) {
             case 0x34: sprintf(buf, "VRSQ %s[%d], %s[%d]", VD, DE, VT, E); break;
             case 0x35: sprintf(buf, "VRSQL %s[%d], %s[%d]", VD, DE, VT, E); break;
             case 0x36: sprintf(buf, "VRSQH %s[%d], %s[%d]", VD, DE, VT, E); break;
-            case 0x37: sprintf(buf, "VNOP"); break;
+            case 0x37: sprintf(buf, "VNOP %s[%d], %s[%d]", VD, DE, VT, E); break;
             }
             #undef E
             #undef DE

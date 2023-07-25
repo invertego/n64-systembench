@@ -37,12 +37,14 @@ static uint32_t* generate_instr(uint32_t* code_start, uint32_t* code_ptr, bool* 
     uint32_t offset;
     uint32_t target;
     uint32_t e, de, vsar_e;
-    uint32_t vt, vd, vs;
+    uint32_t vt, vd, vs, vc;
     bool link;
     bool in_delay = *delay;
     *delay = false;
 
     #define npc (code_ptr - code_start + 1)
+    #define rand_r() RANDN(4)
+    #define rand_v() RANDN(4)
 retry:
     int group = 0;
     if (flags == GEN_SU) group = RANDN(7);
@@ -70,7 +72,7 @@ retry:
         case 9: emit_bgezal(reg_zero, 1); break;
         case 10: link = false;
         case 11:
-            rd = reg_t0 + RANDN(3);
+            rd = rand_r();
             target = (npc + 3) << 2;
             emit_lui(reg_at, target >> 16);
             emit_ori(reg_at, reg_at, target);
@@ -82,9 +84,9 @@ retry:
         } break;
     // alu
     case 2:
-        rt = reg_t0 + RANDN(3);
-        rs = reg_t0 + RANDN(3);
-        rd = reg_t0 + RANDN(3);
+        rt = rand_r();
+        rs = rand_r();
+        rd = rand_r();
         sa = imm = RANDN(3);
         switch(RANDN(24)) {
         case 0: emit_addi(rt, rs, imm); break;
@@ -114,8 +116,8 @@ retry:
         } break;
     // load/store
     case 3:
-        rt = reg_t0 + RANDN(3);
-        base = reg_t0 + RANDN(3);
+        rt = rand_r();
+        base = rand_r();
         offset = RANDN(3);
         switch (RANDN(9)) {
         case 0: emit_lb(rt, offset, base); break;
@@ -130,27 +132,28 @@ retry:
         } break;
     // scc
     case 4:
-        rt = reg_t0 + RANDN(3);
+        rt = rand_r();
         switch (RANDN(2)) {
         case 0: emit_mfc0(rt, reg_zero); break;
         case 1: emit_mtc0(rt, reg_zero); break;
         } break;
     // vu
     case 5:
-        rt = reg_t0 + RANDN(3);
-        rd = RANDN(3);
+        rt = rand_r();
+        rd = rand_v();
+        vc = RANDN(4);
         e = 0;
         switch (RANDN(4)) {
         case 0: emit_mfc2(rt, rd, e); break;
-        case 1: emit_cfc2(rt, rd);    break;
+        case 1: emit_cfc2(rt, vc);    break;
         case 2: emit_mtc2(rt, rd, e); break;
-        case 3: emit_ctc2(rt, rd);    break;
+        case 3: emit_ctc2(rt, vc);    break;
         } break;
     // vu load/store
     case 6:
-        vt = RANDN(3);
+        vt = rand_v();
         e = 0;
-        base = reg_t0 + RANDN(3);
+        base = rand_r();
         offset = RANDN(3);
         switch (RANDN(23)) {
         case 0: emit_lbv(vt, e, offset, base); break;
@@ -183,11 +186,11 @@ retry:
     case 9:
     case 10:
         e = 0;
-        de = 0;
+        de = rand_v();
         vsar_e = 8 + RANDN(4);
-        vd = RANDN(3);
-        vs = RANDN(3);
-        vt = RANDN(3);
+        vd = rand_v();
+        vs = rand_v();
+        vt = rand_v();
         switch (RANDN(44)) {
         case 0: emit_vmulf(vd, vs, vt, e); break;
         case 1: emit_vmulu(vd, vs, vt, e); break;
@@ -200,7 +203,7 @@ retry:
         case 8: emit_vmacf(vd, vs, vt, e); break;
         case 9: emit_vmacu(vd, vs, vt, e); break;
         case 10: emit_vrndn(vd, vs, vt, e); break;
-        case 11: emit_vmacq(vd); break;
+        case 11: emit_vmacq(vd, vs, vt, e); break;
         case 12: emit_vmadl(vd, vs, vt, e); break;
         case 13: emit_vmadm(vd, vs, vt, e); break;
         case 14: emit_vmadn(vd, vs, vt, e); break;
@@ -232,7 +235,7 @@ retry:
         case 40: emit_vrsq(vd, de, vt, e); break;
         case 41: emit_vrsql(vd, de, vt, e); break;
         case 42: emit_vrsqh(vd, de, vt, e); break;
-        case 43: emit_vnop(); break;
+        case 43: emit_vnop(vd, de, vt, e); break;
         } break;
     }
     #undef npc
@@ -240,6 +243,8 @@ retry:
 }
 
 uint32_t generate_code(void* code, int inst_count, int* cycle_estimate, int flags) {
+    //rand_state = TICKS_READ();
+
     uint32_t* code_start = code;
     uint32_t* code_ptr = code_start;
 #define npc (code_ptr - code_start + 1)
@@ -261,12 +266,9 @@ uint32_t generate_code(void* code, int inst_count, int* cycle_estimate, int flag
         int next_flags = flags;
         // always begin and end with an SU instruction so prolog/epilog nops (which aren't measured) aren't dual issued
         if (i == 0 || i == inst_count - 1) next_flags &= GEN_SU;
-    retry:
         bool delay_out = delay;
         uint32_t* next_ptr = generate_instr(code_start, code_ptr, &delay_out, next_flags);
         decode_instr(&d_curr, next_ptr[-1]);
-        // avoid weird dual issue restrictions with DE operand VU instructions
-        if (!IS_VU(d_prev.opc) && d_prev.v_out && (d_curr.opc >= I_VRCP && d_curr.opc <= I_VNOP)) goto retry;
         code_ptr = next_ptr;
         d_prev = d_curr;
         delay = delay_out;

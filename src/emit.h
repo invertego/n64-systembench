@@ -96,7 +96,7 @@
 #define emit_vmacf(vd, vs, vt, e) emit_vu(0x08, vd, vs, vt, e)
 #define emit_vmacu(vd, vs, vt, e) emit_vu(0x09, vd, vs, vt, e)
 #define emit_vrndn(vd, vs, vt, e) emit_vu(0x0a, vd, vs, vt, e)
-#define emit_vmacq(vd)            emit_vu(0x0b, vd, 0, 0, 0)
+#define emit_vmacq(vd, vs, vt, e) emit_vu(0x0b, vd, vs, vt, e)
 #define emit_vmadl(vd, vs, vt, e) emit_vu(0x0c, vd, vs, vt, e)
 #define emit_vmadm(vd, vs, vt, e) emit_vu(0x0d, vd, vs, vt, e)
 #define emit_vmadn(vd, vs, vt, e) emit_vu(0x0e, vd, vs, vt, e)
@@ -128,7 +128,7 @@
 #define emit_vrsq(vd, de, vt, e)  emit_vu(0x34, vd, de, vt, e)
 #define emit_vrsql(vd, de, vt, e) emit_vu(0x35, vd, de, vt, e)
 #define emit_vrsqh(vd, de, vt, e) emit_vu(0x36, vd, de, vt, e)
-#define emit_vnop()               emit_vu(0x37, 0, 0, 0, 0)
+#define emit_vnop(vd, de, vt, e)  emit_vu(0x37, vd, de, vt, e)
 
 // LWC2
 #define emit_lwc2(op, vt, e, offset, base) emit_word(0x32 << 26 | (base) << 21 | (vt) << 16 | (op) << 11 | (e) << 7 | ((offset) & 0x7F))

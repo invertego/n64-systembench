@@ -81,15 +81,12 @@ static void stage_if(pipeline_t* p) {
                 pdebugf("if vu dep c %x %x\n", d_prev.vc_out, d.vc_in);
                 break;
             }
-            #if 0
-            // experimenting with looser dependency check
-            uint32_t vd = 1u << ((inst >>  6) & 0x1f);
-            uint32_t vs = 1u << ((inst >> 11) & 0x1f);
-            uint32_t vt = 1u << ((inst >> 16) & 0x1f);
-            if ((d_prev.v_out & (vt | vs | vd)) && d_prev.opc == I_LTV && d.opc == I_VNOP) {
-                break;
+            if (d_prev.v_out & d.v_fake) {
+                if (d.opc != I_VNOP || d_prev.opc == I_MTC2 || d_prev.opc == I_LTV) {
+                    pdebugf("if vu dep f %x %x\n", d_prev.v_out, d.v_fake);
+                    break;
+                }
             }
-            #endif
             issue_vu = true;
             //debugf("vu %03lX %08lX\n", p->if_in.pc, inst);
             p->rd_in.vu.inst = inst;

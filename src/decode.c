@@ -147,11 +147,11 @@ void decode_instr(decoded_t* d_out, uint32_t op) {
     #define VBLOCK(n) (0xFF << ((n) & ~7))
     decoded_t d;
 
-    memset(&d, 0xff, sizeof(d));
-    d.v_in = 0;
-    d.v_out = 0;
-    d.vc_in = 0;
-    d.vc_out = 0;
+    memset(&d, 0, sizeof(d));
+    d.opc = I_INVALID;
+    d.r_in = -1;
+    d.r_in2 = -1;
+    d.r_out = -1;
 
     switch (op >> 26) {
     case 0x00: // SPECIAL
@@ -243,14 +243,14 @@ void decode_instr(decoded_t* d_out, uint32_t op) {
             case 0x2b: d.opc = I_VNOR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x2c: d.opc = I_VXOR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
             case 0x2d: d.opc = I_VNXOR; d.v_out = VMASK(VDn); d.v_in = VMASK(VSn) | VMASK(VTn); break;
-            case 0x30: d.opc = I_VRCP; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x31: d.opc = I_VRCPL; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x32: d.opc = I_VRCPH; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x33: d.opc = I_VMOV; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x34: d.opc = I_VRSQ; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x35: d.opc = I_VRSQL; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x36: d.opc = I_VRSQH; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); break;
-            case 0x37: d.opc = I_VNOP; break;
+            case 0x30: d.opc = I_VRCP; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x31: d.opc = I_VRCPL; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x32: d.opc = I_VRCPH; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x33: d.opc = I_VMOV; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x34: d.opc = I_VRSQ; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x35: d.opc = I_VRSQL; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x36: d.opc = I_VRSQH; d.v_out = VMASK(VDn); d.v_in = VMASK(VTn); d.v_fake = VMASK(VSn); break;
+            case 0x37: d.opc = I_VNOP; d.v_fake = VMASK(VDn); break;
             }
             #undef E
             #undef DE
